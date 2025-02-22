@@ -2,7 +2,7 @@ import random
 import networkx as nx
 
 IndividualNum = 100  # 个体数量
-IteratedNum = 1000  # 迭代次数
+IteratedNum = 100  # 迭代次数
 AverageNum = 100
 
 delta = 0.01  # 选择强度
@@ -23,7 +23,7 @@ while not (nx.is_connected(G) and 2 * G.number_of_edges() / G.number_of_nodes() 
 print(f"k={2 * G.number_of_edges() / G.number_of_nodes()}")
 
 # 博弈参数
-b = 2 * G.number_of_edges() / G.number_of_nodes() + 1 + 2  # k+2+0.01 满足 b/c > k+2
+b = 2 * G.number_of_edges() / G.number_of_nodes() + 2 + 0.01 # k+2+0.01 满足 b/c > k+2
 c = 1
 R, S, T, P = b - c, -c, b, 0
 
@@ -41,37 +41,24 @@ def get_fitness(G, node):
         else:
             payoff += P
 
+    if StrategiesList[node] == 1:
+        payoff += b-c
+
     return 1 - delta + (delta * payoff)
 
 
 # 模仿
 def ImitateUpdate(G):
+
     UpdateNode = random.randint(0, IndividualNum - 1)
-    C_fitness = 0
-    D_fitness = 0
-    # 加f_0
-    self_fitness = get_fitness(G, UpdateNode)
-    if StrategiesList[UpdateNode] == 1:
-        C_fitness += self_fitness
-    else:
-        D_fitness += self_fitness
-    # 求KaFa和KbFb
-    for neighbor in G.neighbors(UpdateNode):
-        neighbor_fitness = get_fitness(G, neighbor)
-        if StrategiesList[neighbor] == 1:
-            C_fitness += neighbor_fitness
-        else:
-            D_fitness += neighbor_fitness
-    total = C_fitness + D_fitness
-    if total == 0:
-        return
-    # 计算切换概率
-    if StrategiesList[UpdateNode] == 1:
-        if random.random() < D_fitness / total:
-            StrategiesList[UpdateNode] = 0
-    else:
-        if random.random() < C_fitness / total:
-            StrategiesList[UpdateNode] = 1
+    Neighbor = random.choice(list(nx.neighbors(G,UpdateNode)))
+
+    NeighborFitness = get_fitness(G, Neighbor)
+    SelfFitness = get_fitness(G, UpdateNode)
+    total = NeighborFitness + SelfFitness
+
+    if random.random() < NeighborFitness / total:
+        StrategiesList[UpdateNode] = StrategiesList[Neighbor]
 
 
 # MAINLOOP
